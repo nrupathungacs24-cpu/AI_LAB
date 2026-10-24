@@ -1,0 +1,80 @@
+from heapq import heappush, heappop
+
+goal = (1, 2, 3, 4, 5, 6, 7, 8, 0)
+
+# Calculate misplaced tiles
+def h(state):
+    return sum(1 for i in range(9)
+               if state[i] != 0 and state[i] != goal[i])
+
+# Generate neighboring states
+def neighbors(state):
+    result = []
+    z = state.index(0)
+    r, c = divmod(z, 3)
+
+    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        nr, nc = r + dr, c + dc
+
+        if 0 <= nr < 3 and 0 <= nc < 3:
+            nz = nr * 3 + nc
+            s = list(state)
+            s[z], s[nz] = s[nz], s[z]
+            result.append(tuple(s))
+
+    return result
+
+def solve(start):
+    pq = [(h(start), 0, start, None)]
+    visited = set()
+    parent = {}
+    cost = {start: 0}
+
+    while pq:
+        f, g, state, par = heappop(pq)
+
+        if state in visited:
+            continue
+
+        visited.add(state)
+        parent[state] = par
+
+        print("State:", state)
+        print("g(n) =", g, "h(n) =", h(state),
+              "f(n) =", g + h(state))
+        print()
+
+        if state == goal:
+            print("Goal reached!")
+            break
+
+        for nxt in neighbors(state):
+            ng = g + 1
+
+            if nxt not in visited and ng < cost.get(nxt, float("inf")):
+                cost[nxt] = ng
+                heappush(pq, (ng + h(nxt), ng, nxt, state))
+
+    else:
+        print("No solution found")
+        return
+
+    # Print solution path
+    path = []
+    state = goal
+
+    while state is not None:
+        path.append(state)
+        state = parent[state]
+
+    print("Solution Path:")
+    for state in reversed(path):
+        for i in range(0, 9, 3):
+            print(state[i:i+3])
+        print()
+
+start = (1, 2, 3,
+         4, 0, 6,
+         7, 5, 8)
+
+solve(start)
