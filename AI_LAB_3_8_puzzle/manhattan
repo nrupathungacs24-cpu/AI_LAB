@@ -1,0 +1,100 @@
+from heapq import heappush, heappop
+
+goal = (1, 2, 3,
+        4, 5, 6,
+        7, 8, 0)
+
+# Manhattan Distance Heuristic
+def h(state):
+    distance = 0
+
+    for i in range(9):
+        tile = state[i]
+
+        if tile != 0:
+            current_row, current_col = divmod(i, 3)
+            goal_row, goal_col = divmod(tile - 1, 3)
+
+            distance += (abs(current_row - goal_row)
+                         + abs(current_col - goal_col))
+
+    return distance
+
+
+# Generate neighboring states
+def neighbors(state):
+    result = []
+    zero = state.index(0)
+    row, col = divmod(zero, 3)
+
+    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        nr, nc = row + dr, col + dc
+
+        if 0 <= nr < 3 and 0 <= nc < 3:
+            new_pos = nr * 3 + nc
+            s = list(state)
+            s[zero], s[new_pos] = s[new_pos], s[zero]
+            result.append(tuple(s))
+
+    return result
+
+
+# A* Search
+def solve(start):
+    pq = [(h(start), 0, start)]
+    parent = {start: None}
+    cost = {start: 0}
+    visited = set()
+
+    while pq:
+        f, g, state = heappop(pq)
+
+        if state in visited:
+            continue
+
+        visited.add(state)
+
+        print("State:")
+        for i in range(0, 9, 3):
+            print(state[i:i+3])
+
+        print("g(n) =", g)
+        print("h(n) =", h(state))
+        print("f(n) =", g + h(state))
+        print()
+
+        if state == goal:
+            print("Goal reached!")
+            break
+
+        for nxt in neighbors(state):
+            new_g = g + 1
+
+            if new_g < cost.get(nxt, float("inf")):
+                cost[nxt] = new_g
+                parent[nxt] = state
+                heappush(pq, (new_g + h(nxt), new_g, nxt))
+    else:
+        print("No solution found")
+        return
+
+    # Print solution path
+    path = []
+    state = goal
+
+    while state is not None:
+        path.append(state)
+        state = parent[state]
+
+    print("Solution Path:")
+    for state in reversed(path):
+        for i in range(0, 9, 3):
+            print(state[i:i+3])
+        print()
+
+
+start = (1, 2, 3,
+         4, 0, 6,
+         7, 5, 8)
+
+solve(start)
