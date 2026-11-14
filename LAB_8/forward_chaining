@@ -1,0 +1,85 @@
+def check_criminal_status(base_facts, target_person):
+    kb = set(base_facts) 
+    iteration = 1
+    
+    print(f"--- Investigating: {target_person} ---")
+    print(f"Starting Facts: {kb}\n")
+    
+    while True:
+        new_facts = set()
+
+        # Rule 1: Missile(x) => Weapon(x)
+        for fact in kb:
+            if fact[0] == "Missile":
+                new_facts.add(("Weapon", fact[1]))
+                
+        # Rule 2: Enemy(x, America) => Hostile(x)
+        for fact in kb:
+            if fact[0] == "Enemy" and fact[2] == "America":
+                new_facts.add(("Hostile", fact[1]))
+
+        # Rule 3: Missile(x) AND Owns(A, x) => Sells(target_person, x, A)
+        for f1 in kb:
+            if f1[0] == "Missile":
+                x = f1[1]
+                if ("Owns", "A", x) in kb:
+                    new_facts.add(("Sells", target_person, x, "A"))
+
+        # Rule 4: The Law
+        # American(p) AND Weapon(q) AND Sells(p, q, r) AND Hostile(r) => Criminal(p)
+        for f1 in kb:
+            if f1[0] == "American":
+                p = f1[1]
+                for f2 in kb:
+                    if f2[0] == "Weapon":
+                        q = f2[1]
+                        for f3 in kb:
+                            if f3[0] == "Hostile":
+                                r = f3[1]
+                                if ("Sells", p, q, r) in kb:
+                                    new_facts.add(("Criminal", p))
+
+        # Find only the facts we didn't already know
+        added_facts = new_facts - kb
+        
+        # Stop if the engine couldn't find anything new
+        if not added_facts:
+            print("Engine stopped: No new facts can be inferred.")
+            break
+            
+        print(f"Iteration {iteration}:")
+        for f in added_facts:
+            print(f"  -> Discovered: {f}")
+        print()
+            
+        kb.update(added_facts)
+        iteration += 1
+
+    # Final Verdict Check
+    if ("Criminal", target_person) in kb:
+        print(f"\nVerdict: {target_person} IS A CRIMINAL. (All conditions met)\n")
+    else:
+        print(f"\nVerdict: {target_person} is NOT A CRIMINAL. (Insufficient evidence)\n")
+        print("-" * 50)
+
+
+# Scenario 1: All evidence is present
+facts_1 = {
+    ("American", "Robert"),
+    ("Enemy", "A", "America"),
+    ("Missile", "T1"),
+    ("Owns", "A", "T1") 
+}
+
+# Scenario 2: Missing the 'Owns' link
+facts_2 = {
+    ("American", "Robert"),
+    ("Enemy", "A", "America"),
+    ("Missile", "T1")
+}
+
+print("SCENARIO 1:")
+check_criminal_status(facts_1, "Robert")
+
+print("SCENARIO 2:")
+check_criminal_status(facts_2, "Robert")
